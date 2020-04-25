@@ -1,0 +1,50 @@
+#!/bin/bash
+# Inspired by https://stackoverflow.com/a/55796558
+
+usage () {
+  printf "List all resources in NAMESPACE.\n\n"
+  printf "Examples:\n"
+  printf "  # Print all non-empty resources in the current namespace\n"
+  printf "  kubectl getall\n\n"
+  printf "  # Print all resources, including empty, in the current namespace\n"
+  printf "  kubectl getall -v\n\n"
+  printf "  # Print all non-empty resources in the supplied namespace\n"
+  printf "  kubectl getall kube-system\n\n"
+  printf "  # Print all resources, including empty, in the supplied namespace\n"
+  printf "  kubectl getall -v cube-system\n\n"
+  printf "Options:\n"
+  printf "  -v\t List all resources, including empty\n\n"
+  printf "Usage:\n"
+  printf "  kubectl getall  [OPTION]... [NAMESPACE]\n"
+  printf "With no NAMESPACE, namespace of current context is selected\n\n"
+}
+
+for arg in "$@"; do
+  if [ "$arg" == "--help" ]; then
+    usage
+    exit 0
+  fi
+done
+
+while getopts :v option; do
+  case $option in
+    v)
+      verbose=true
+      ;;
+    \?)
+      printf "Invalid option: -$OPTARG\n\n" >&2
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+[ -z "$1" ] && namespace=$(kubectl config current-context) || namespace=$1
+
+for i in $(kubectl api-resources --verbs=list --namespaced -o name | grep -v "events.events.k8s.io" | grep -v "events" | sort | uniq); do
+  resources=$(kubectl -n ${namespace} get --ignore-not-found ${i})
+  if [ "$verbose" = true ] || [ -n "${resources}" ] ; then
+    resources=$(sed 's/^/  /g' <<< "$resources")
+    printf "%s\n%s\n\n" $i "$resources"
+  fi
+done
