@@ -10,10 +10,10 @@ A small kubectl plugin to list all resources in a Kubernetes namespace
 - Print all resources, including empty, in the current namespace
   ```bash
   kubectl getall -v
-  ````
+  ```
 
 - Print all non-empty resources in the supplied namespace
-  '''bash
+  ```bash
   kubectl getall kube-system
   ```
 
